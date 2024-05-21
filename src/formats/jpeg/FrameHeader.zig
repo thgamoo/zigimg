@@ -4,13 +4,30 @@
 const std = @import("std");
 
 const buffered_stream_source = @import("../../buffered_stream_source.zig");
+
 const Image = @import("../../Image.zig");
 const ImageReadError = Image.ReadError;
+const JpegReadError = @import("./Error.zig").DecodeError;
 
 const Allocator = std.mem.Allocator;
 
 const JPEG_DEBUG = false;
 
+// enum of number of components
+const ComponentCount = enum(u8) {
+    Grayscale = 1,
+    YCbCr_RGB = 3,
+    CMYK = 4,
+
+    pub fn isValid(component_count: u8) bool {
+        return switch (component_count) {
+            1, 3, 4 => true,
+            else => false,
+        };
+    }
+};
+
+// component information
 const Component = struct {
     id: u8,
     horizontal_sampling_factor: u4,
@@ -26,18 +43,15 @@ const Component = struct {
         const vertical_sampling_factor: u4 = @intCast(sampling_factors & 0xF);
 
         if (horizontal_sampling_factor < 1 or horizontal_sampling_factor > 4) {
-            // TODO(angelo): error, create cusotm error
-            return ImageReadError.InvalidData;
+            return JpegReadError.SamplingFactorError;
         }
 
         if (vertical_sampling_factor < 1 or vertical_sampling_factor > 4) {
-            // TODO(angelo): error, create custom error
-            return ImageReadError.InvalidData;
+            return JpegReadError.SamplingFactorError;
         }
 
         if (quantization_table_id > 3) {
-            // TODO(angelo): error, create custom error
-            return ImageReadError.InvalidData;
+            return JpegReadError.QuantizationTableError;
         }
 
         return Component{
@@ -67,9 +81,8 @@ pub fn read(allocator: Allocator, reader: buffered_stream_source.DefaultBuffered
 
     const component_count = try reader.readByte();
 
-    if (component_count != 1 and component_count != 3) {
-        // TODO(angelo): use jpeg error here, for components
-        return ImageReadError.InvalidData;
+    if (!ComponentCount.isValid(component_count)) {
+        return JpegReadError.ComponentCount;
     }
 
     if (JPEG_DEBUG) std.debug.print("  {}x{}, precision={}, {} components\n", .{ samples_per_row, row_count, sample_precision, component_count });

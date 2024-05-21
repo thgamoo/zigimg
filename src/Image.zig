@@ -5,6 +5,8 @@ const color = @import("color.zig");
 const std = @import("std");
 const utils = @import("utils.zig");
 
+const JpegReadError = @import("./formats/jpeg/Error.zig").DecodeError;
+
 pub const Error = error{
     Unsupported,
 };
@@ -14,7 +16,8 @@ pub const ReadError = Error ||
     utils.StructReadError ||
     std.io.StreamSource.SeekError ||
     std.io.StreamSource.GetSeekPosError ||
-    error{ EndOfStream, StreamTooLong, InvalidData };
+    error{ EndOfStream, StreamTooLong, InvalidData } ||
+    JpegReadError;
 
 pub const WriteError = Error ||
     std.mem.Allocator.Error ||

@@ -3,10 +3,10 @@ const buffered_stream_source = @import("../buffered_stream_source.zig");
 
 const Allocator = std.mem.Allocator;
 
+const Image = @import("../Image.zig");
 const ImageError = Image.Error;
 const ImageReadError = Image.ReadError;
 const ImageWriteError = Image.WriteError;
-const Image = @import("../Image.zig");
 const FormatInterface = @import("../FormatInterface.zig");
 const color = @import("../color.zig");
 const PixelFormat = @import("../pixel_format.zig").PixelFormat;
